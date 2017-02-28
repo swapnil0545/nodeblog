@@ -9,7 +9,8 @@ block content
           =post.title
       p.meta Posted in 
         a(href='/categories/show/#{post.category}') #{post.category} by #{post.author} on #{moment(post.date).format("MM-DD-YYYY")}
-      =post.body
+      img(src='/images/uploads/#{post.mainimage}')
+      !=post.body.substring(0, 100)
       a.more(href='/posts/show/#{post._id}') Read More
   else
     p.noposts There are not posts to display

@@ -3,6 +3,54 @@ var router = express.Router();
 var mongo = require('mongodb');
 var db = require('monk')('localhost/nodeblog');
 
+router.get('/show/:id', function(req, res, next){
+   var posts = db.get('posts');
+   posts.findById(req.params.id, function(err, post){
+      if(err) throw err;
+      res.render('show', {'title': post.title, 'post': post});
+   });
+});
+
+router.post('/addcomment', function(req, res, next){
+   var name = req.body.name;
+   var email = req.body.email;
+   var body = req.body.body;
+   var postId = req.body.postid;
+   var commentDate = new Date();
+   
+   req.checkBody('name', 'Name is required').notEmpty();
+   req.checkBody('email', 'Email is required').notEmpty();
+   req.checkBody('email', 'Must be an email').isEmail();
+   req.checkBody('body', 'Body is required').notEmpty();
+   
+   var errors = req.validationErrors();
+   
+   if(errors) {
+       var posts = db.get('posts');
+       posts.findById(postId, function(err, post){
+            if(err) throw err;
+            res.render('show', {'errors': errors, 'post': post});
+       });
+   } else {
+        var comment = {'name': name, 'email': email, 'body': body, 'commentdate': commentDate};
+        var posts = db.get('posts');
+        posts.update({
+            '_id': postId   
+        },
+        {
+            $push:{
+                'comments': comment
+            }
+        }, function(err, doc){
+                if(err) throw err;
+                req.flash('success', 'Comment Added');
+                res.location('/posts/show/'+postId);
+                res.redirect('/posts/show/'+postId);
+            }
+        );
+   }
+});
+
 router.get('/add', function(req, res, next){
     var categories = db.get('categories');
     categories.find({},{}, function(err, categories){
